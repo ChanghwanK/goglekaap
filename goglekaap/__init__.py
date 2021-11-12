@@ -1,6 +1,6 @@
 # 하나의 디렉토리가 모듈화 된다.
-import re
 from flask import Flask
+
 
 def create_app():
     print('run:' 'create_app()')
