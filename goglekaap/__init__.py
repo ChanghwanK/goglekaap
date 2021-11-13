@@ -1,36 +1,26 @@
 # 하나의 디렉토리가 모듈화 된다.
 from flask import Flask
+from flask import render_template
 
 
 def create_app():
-    print('run:' 'create_app()')
     app = Flask(__name__)
+    app.logger.info('RUN Flask')
+
+    # static file Cache time (max-age)을 1초로 변경 기본은 12시간
+    # DEBUG MODE 때는 이를 1초로 한다.
+    if app.config['DEBUG']:
+        app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 1
 
     @app.route('/')
-    def indext():
-        app.logger.info('RUN HELLO WORLD')
-        return 'hello world'
+    def index():
+        app.logger.info('RUN Hello Flask')
+        return render_template('index.html')
 
-    # 리퀘스트 훅  예제
-    ''' Request Hook '''
-    @app.before_request
-    def before_request():
-        app.logger.info('BEFORE_REQUEST')
+    @app.errorhandler(404)
+    def page_404(error):
+        # 리턴은 어떤 페이지로 render 할지, 에러 코드
+        return render_template('/404.html'), 404
 
-    @app.before_first_request
-    def before_first_request():
-        app.logger.info('BEFORE_FIRST_REQUEST')
-
-    @app.after_request
-    def after_request(response):
-        app.logger.info('AFTER REQEUST')
-        # after request는 response를 리턴해야 함
-        return response
-
-    # teardown은 Reqeust가 끝날 때 실행된다.
-    @app.teardown_request
-    def teardown_request(exception):
-        app.logger.info('TEARDOWN_REQUEST')
-
-    
     return app
+
