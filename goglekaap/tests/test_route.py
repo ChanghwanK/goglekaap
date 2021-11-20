@@ -22,3 +22,23 @@ def test_auth(client):
     )
     print(res.status)
     assert res.status_code == 200
+
+    res = client.get(
+        'auth/login',
+        follow_redirects=True
+    )
+    assert res.status_code == 200
+
+    res = client.get(
+        'auth/logout',
+        follow_redirects=True
+    )
+    assert res.status_code == 200
+
+def test_base(client):
+    res = client.get(
+        '/',
+        follow_redirects = True
+    )
+
+    assert res.status_code == 200
