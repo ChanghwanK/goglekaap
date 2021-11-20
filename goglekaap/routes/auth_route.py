@@ -4,7 +4,8 @@ from flask import (
     redirect,
     url_for,
     flash,
-    session
+    session,
+    request
 )
 
 from goglekaap.forms.auth_form import (
@@ -12,6 +13,7 @@ from goglekaap.forms.auth_form import (
     RegisterForm
 )
 
+from goglekaap import db
 from goglekaap.model.user import User
 from werkzeug import security
 
@@ -29,38 +31,52 @@ def login():
     form = LoginForm()
     # POST, validate == OK
     if form.validate_on_submit():
-        # TODO
-        # 유저 조회
-        # 유저 이미 존재하는지 체크
-        # 없으면 유저 생성
-        # 로그인 유저 (세션)
-        user_id = form.data.get('user_id')
-        password = form.data.get('password')
-        return f'{user_id}, {password}'
-    else:
-        flash_form_errors(form)
-        pass
+        user = User.find_one_by_user_id(form.user_id.data)
+        if user:
+            if not security.check_password_hash(
+                    user.password,
+                    form.password.data
+            ):
+                flash('Password is not valid.')
+            else:
+                session['user_id'] = user.user_id
+                return redirect(url_for('base.index'))
+        else:
+            flash('User ID is not exists.')
+        return redirect(request.path)
+
+    if session.get("user_id"):
+        return redirect(url_for('base.index'))
     return render_template(f'{NAME}/login.html', form=form)
 
 
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterForm()
+    user_id = form.user_id.data
+
     if form.validate_on_submit():
-        # TODO
-        # 유저조회
-        # 없으면 생성
-        # 생성된 유저를 로그인 유지 (세션)
+        user = User.find_one_by_user_id(user_id)
 
-
-        user_id = form.data.get('user_id')
-        user_name = form.data.get('user_name')
-        password = form.data.get('password')
-        repassword = form.data.get('repassword')
-        return f'{user_id},{user_name}, {password}, {repassword}'
+        if user:
+            flash('User ID is already exsits.')
+            return redirect(request.path)
+        else:
+            user = User(
+                user_id=user_id,
+                user_name=form.user_name.data,
+                password=security.generate_password_hash(form.password.data)
+            )
+            db.session.add(user)
+            db.session.commit()
+            session['user_id'] = user.user_id
+        return redirect(url_for('base.index'))
     else:
         flash_form_errors(form)
-        pass
+
+    if session.get('user_id'):
+        return redirect(url_for('base.index'))
+
     return render_template(f'{NAME}/register.html', form=form)
 
 
