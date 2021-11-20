@@ -45,6 +45,8 @@ def create_app( config = None ):
     from goglekaap.apis import blueprint as api
     app.register_blueprint( api )
 
+    @app.route('/test')
+
     @app.errorhandler( 404 )
     def page_404( error ):
         # 리턴은 어떤 페이지로 render 할지, 에러 코드
